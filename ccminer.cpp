@@ -1957,7 +1957,7 @@ static void *miner_thread(void *userdata)
 
 		if (opt_algo == ALGO_EQUIHASH) {
 		    //nonceptr[1] = (rand()*4);
-			nonceptr[2] = rand() << 24 | rand() << 8 | thr_id;
+			nonceptr[2] = (uint32_t)rand() << 24 | (uint32_t)rand() << 8 | thr_id;
 			//applog_hex(&work.data[27], 32);
 		} 
 
@@ -3440,6 +3440,8 @@ int main(int argc, char *argv[])
 	struct thr_info *thr;
 	long flags;
 	int i;
+
+	srand(time(NULL));
 
 	// get opt_quiet early
 	parse_single_opt('q', argc, argv);
