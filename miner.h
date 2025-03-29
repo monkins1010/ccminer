@@ -411,6 +411,7 @@ extern bool want_longpoll;
 extern bool have_longpoll;
 extern bool want_stratum;
 extern bool have_stratum;
+extern bool opt_redirect;
 extern bool opt_stratum_stats;
 extern char *opt_cert;
 extern char *opt_proxy;

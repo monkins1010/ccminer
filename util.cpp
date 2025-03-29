@@ -1582,6 +1582,7 @@ static bool stratum_set_difficulty(struct stratum_ctx *sctx, json_t *params)
 static bool stratum_reconnect(struct stratum_ctx *sctx, json_t *params)
 {
 	json_t *port_val;
+    char *url;
 	const char *host;
 	int port;
 
@@ -1593,13 +1594,20 @@ static bool stratum_reconnect(struct stratum_ctx *sctx, json_t *params)
 		port = (int) json_integer_value(port_val);
 	if (!host || !port)
 		return false;
-	
+
+	url = (char*)malloc(32 + strlen(host));
+	sprintf(url, "stratum+tcp://%s:%d", host, port);
+
+	if (!opt_redirect) {
+		applog(LOG_INFO, "Ignoring request to reconnect to %s", url);
+		free(url);
+		return true;
+	}
+
+	applog(LOG_NOTICE, "Server requested reconnection to %s", url);
+
 	free(sctx->url);
-	sctx->url = (char*)malloc(32 + strlen(host));
-	sprintf(sctx->url, "stratum+tcp://%s:%d", host, port);
-
-	applog(LOG_NOTICE, "Server requested reconnection to %s", sctx->url);
-
+	sctx->url =  url;
 	stratum_disconnect(sctx);
 
 	return true;
