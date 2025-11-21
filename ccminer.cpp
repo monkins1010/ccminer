@@ -79,6 +79,9 @@ struct workio_cmd {
 	int pooln;
 };
 
+// nicehash mode [ --nicehash ]
+bool nicehash = false;
+
 bool opt_debug = false;
 bool opt_debug_diff = false;
 bool opt_debug_threads = false;
@@ -306,6 +309,7 @@ Options:\n\
 			x17         X17\n\
 			wildkeccak  Boolberry\n\
 			zr5         ZR5 (ZiftrCoin)\n\
+      --nicehash        Enable extranonce subscribe(for nicehash) using this option\n\
   -d, --devices         Comma separated list of CUDA devices to use.\n\
                         Device IDs start counting from 0! Alternatively takes\n\
                         string names of your cards like gtx780ti or gt640#2\n\
@@ -416,6 +420,7 @@ struct option options[] = {
 	{ "no-longpoll", 0, NULL, 1003 },
 	{ "no-stratum", 0, NULL, 1007 },
 	{ "no-autotune", 0, NULL, 1004 },  // scrypt
+	{ "nicehash", 0, NULL, 1040 },     // nicehash mode [ --nicehash ]
 	{ "interactive", 1, NULL, 1050 },  // scrypt
 	{ "lookup-gap", 1, NULL, 'L' },    // scrypt
 	{ "texture-cache", 1, NULL, 1051 },// scrypt
@@ -1938,6 +1943,37 @@ static void *miner_thread(void *userdata)
 			//nonceptr[0] = (UINT32_MAX / opt_n_threads) * thr_id; // 0 if single thr
 		}
 
+		/* nicehash support */
+		if (opt_algo == ALGO_EQUIHASH) {
+			uint32_t oldpos = nonceptr[0];
+			bool nh = strstr(pools[cur_pooln].url, "nicehash") != NULL;
+			if (memcmp(&work.data[wcmpoft], &g_work.data[wcmpoft], wcmplen)) {
+				memcpy(&work, &g_work, sizeof(struct work));
+				if (!nh) nonceptr[0] = (rand()*4) << 24;
+				nonceptr[0] &=  0xFF000000u; // nicehash prefix hack
+				nonceptr[0] |= (0x00FFFFFFu / opt_n_threads) * thr_id;
+
+				if (nicehash) {
+					// enable subscribe when using this option.
+					opt_extranonce = true;
+				} else {
+					// disable subscribe by default.
+					opt_extranonce = false;
+				}
+			}
+			// also check the end, nonce in the middle.
+			else if (memcmp(&work.data[44/4], &g_work.data[0], 76-44)) {
+				memcpy(&work, &g_work, sizeof(struct work));
+			}
+			if (oldpos & 0xFFFF) {
+				if (!nh) nonceptr[0] = oldpos + 0x1000000u;
+				else {
+					uint32_t pfx = nonceptr[0] & 0xFF000000u;
+					nonceptr[0] = pfx | ((oldpos + 0x8000u) & 0xFFFFFFu);
+				}
+			}
+		}
+
 		if (memcmp(&work.data[wcmpoft], &g_work.data[wcmpoft], wcmplen)) {
 			#if 0
 			if (opt_debug) {
@@ -3035,6 +3071,9 @@ void parse_arg(int key, char *arg)
 				device_lookup_gap[n++] = last;
 		}
 		break;
+	case 1040: /* --nicehash */
+		nicehash = true;
+		break;
 	case 1050: /* scrypt --interactive */
 		{
 			char *pch = strtok(arg,",");
@@ -3543,8 +3582,8 @@ int main(int argc, char *argv[])
 		allow_mininginfo = false;
 	}
 
-	if (opt_algo == ALGO_EQUIHASH) {
-		opt_extranonce = false; // disable subscribe
+	if (opt_algo == ALGO_EQUIHASH && !nicehash) {
+		opt_extranonce = false; // disable subscribe by default.
 	}
 
 
