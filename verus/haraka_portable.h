@@ -1,7 +1,11 @@
 #ifndef SPX_HARAKA_H
 #define SPX_HARAKA_H
 
+#ifdef ARM
+#include "sse2neon/sse2neon.h"
+#else
 #include "immintrin.h"
+#endif
 
 #define NUMROUNDS 5
 

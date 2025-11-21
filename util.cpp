@@ -167,7 +167,7 @@ void gpulog(int prio, int thr_id, const char *fmt, ...)
 		return;
 
 
-	len = snprintf(pfmt, 128, "CPU T%d: Verus Hashing", thr_id, fmt);
+	len = snprintf(pfmt, 128, "CPU T%d: Verus Hashing %s", thr_id, fmt);
 
 	pfmt[sizeof(pfmt)-1]='\0';
 

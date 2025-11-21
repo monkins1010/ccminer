@@ -39,6 +39,10 @@
 #define le64toh(x) OSSwapLittleToHostInt64(x)
 #endif
 
+#ifdef __ANDROID__
+#include <sys/endian.h>
+#endif
+
 class CScript;
 
 static const unsigned int MAX_SIZE = 0x02000000;

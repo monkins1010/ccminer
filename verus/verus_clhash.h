@@ -23,11 +23,13 @@
 
 //#include <intrin.h>
 
-#ifndef _WIN32
-#include <cpuid.h>
-#else
+#ifdef _WIN32
 #include <intrin.h>
-#endif // !WIN32
+#elif defined(ARM)
+#include "sse2neon/sse2neon.h"
+#else
+#include <cpuid.h>
+#endif // WIN32
 
 
 #include <stdlib.h>
@@ -63,6 +65,7 @@ enum {
 
 extern int __cpuverusoptimized;
 
+#ifndef ARM
 inline bool IsCPUVerusOptimized()
 {
 
@@ -118,6 +121,8 @@ inline bool IsCPUVerusOptimized()
 
 };
 
+#endif // !ARM
+
 inline void ForceCPUVerusOptimized(bool trueorfalse)
 {
     __cpuverusoptimized = trueorfalse;
@@ -129,8 +134,6 @@ uint64_t verusclhashv2_2(void * random, const unsigned char buf[64], uint64_t ke
 	u128 *g_prand, u128 *g_prandex);
 uint64_t verusclhash_port(void * random, const unsigned char buf[64], uint64_t keyMask, uint32_t *fixrand, uint32_t *fixrandex,
 	u128 *g_prand, u128 *g_prandex);
-
-void *alloc_aligned_buffer(uint64_t bufSize);
 
 #ifdef __cplusplus
 } // extern "C"

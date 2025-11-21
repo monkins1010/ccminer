@@ -52,6 +52,12 @@ case $target in
     have_x86=true
     have_x86_64=true
     ;;
+  aarch64-*)
+    have_arm64=true
+    ;;
+  arm*)
+    have_arm=true
+    ;;
 esac
 
 PTHREAD_FLAGS="-pthread"
@@ -63,7 +69,7 @@ case $target in
     PTHREAD_FLAGS=""
     WS2_LIBS="-lws2_32"
     ;;
-  *86*-apple-darwin*)
+  *-apple-darwin*)
     have_osx=true
     PTHREAD_FLAGS=""
     ;;
@@ -85,6 +91,8 @@ AM_CONDITIONAL([HAVE_WINDOWS], [test x$have_win32 = xtrue])
 AM_CONDITIONAL([HAVE_OSX], [test x$have_osx = xtrue])
 AM_CONDITIONAL([ARCH_x86], [test x$have_x86 = xtrue])
 AM_CONDITIONAL([ARCH_x86_64], [test x$have_x86_64 = xtrue])
+AM_CONDITIONAL([ARCH_ARM64], [test x$have_arm64 = xtrue])
+AM_CONDITIONAL([ARCH_ARM], [test x$have_arm = xtrue])
 
 if test x$request_jansson = xtrue
 then
@@ -93,11 +101,23 @@ else
 	JANSSON_LIBS=-ljansson
 fi
 
+if test x$have_arm = xtrue
+then
+  ARCH_FLAGS="-march=armv7 -mfpu=neon -DARM"
+else
+if test x$have_arm64 = xtrue
+then
+  ARCH_FLAGS="-march=armv8-a+fp+simd+crypto -DARM"
+else
+  ARCH_FLAGS="-march=native -mtune=native -fno-strict-aliasing"
+fi
+fi
 
 AC_SUBST(JANSSON_LIBS)
 AC_SUBST(PTHREAD_FLAGS)
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(WS2_LIBS)
+AC_SUBST(ARCH_FLAGS)
 
 AC_CONFIG_FILES([
 	Makefile

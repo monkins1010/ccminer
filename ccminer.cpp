@@ -567,9 +567,11 @@ static void affine_to_cpu_mask(int id, unsigned long mask) {
 	else
 		SetThreadAffinityMask(GetCurrentThread(), mask);
 }
+static void affine_to_cpu(int id) { }
 #else /* Martians */
 static inline void drop_policy(void) { }
 static void affine_to_cpu_mask(int id, uint8_t mask) { }
+static void affine_to_cpu(int id) { }
 #endif
 
 static bool get_blocktemplate(CURL *curl, struct work *work);
@@ -2318,7 +2320,7 @@ static void *miner_thread(void *userdata)
 		if (!opt_quiet && loopcnt > 1 && (time(NULL) - tm_rate_log) > opt_maxlograte) {
 			format_hashrate(thr_hashrates[thr_id], s);
 			if(thr_hashrates[thr_id]>0)
-			gpulog(LOG_INFO, thr_id, "%s, %s", device_name[dev_id], s);
+			gpulog(LOG_INFO, thr_id, "%s", s);
 			tm_rate_log = time(NULL);
 		}
 

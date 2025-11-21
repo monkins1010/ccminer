@@ -359,16 +359,3 @@ uint64_t verusclhashv2_2(void * random, const unsigned char buf[64], uint64_t ke
 
 #define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
 #endif
-
-void *alloc_aligned_buffer(uint64_t bufSize)
-{
-	void *answer = NULL;
-	if (posix_memalign(&answer, sizeof(__m256i), bufSize))
-	{
-		return NULL;
-	}
-	else
-	{
-		return answer;
-	}
-}
