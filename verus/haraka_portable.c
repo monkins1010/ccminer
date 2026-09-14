@@ -81,36 +81,25 @@ static const unsigned char sbox[256] =
 #define XT(x) (((x) << 1) ^ ((((x) >> 7) & 1) * 0x1b))
 
 // Simulate _mm_aesenc_si128 instructions from AESNI
-void aesenc(unsigned char *s, const unsigned char *rk) 
+// Software implementation, restored from the commented-out original below.
+// This file must not require the ARMv8 crypto extensions.
+void aesenc(unsigned char *s, const unsigned char *rk)
 {
-
-  uint8x16_t tmp1, tmp2, tmp3;
-// uint8_t s[16] = { i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7],
-//                   i[8], i[9], i[10], i[11], i[12], i[13], i[14], i[15] };
-
- tmp1 =  vld1q_u8(s);
- tmp2 = vld1q_u8(rk);
-
- tmp3 = vaesmcq_u8(vaeseq_u8(tmp1, (uint8x16_t){})) ^ tmp2;
-  
-  ((uint64_t*)&s[0])[0] = (uint64_t)vgetq_lane_u64(tmp3,0);
-  ((uint64_t*)&s[0])[1] = (uint64_t)vgetq_lane_u64(tmp3,1);
-
-  /*  unsigned char i, t, u, v[4][4];
-    for (i = 0; i < 16; ++i) {
-        v[((i / 4) + 4 - (i%4) ) % 4][i % 4] = sbox[s[i]];
-    }
-    for (i = 0; i < 4; ++i) {
-        t = v[i][0];
-        u = v[i][0] ^ v[i][1] ^ v[i][2] ^ v[i][3];
-        v[i][0] ^= u ^ XT(v[i][0] ^ v[i][1]);
-        v[i][1] ^= u ^ XT(v[i][1] ^ v[i][2]);
-        v[i][2] ^= u ^ XT(v[i][2] ^ v[i][3]);
-        v[i][3] ^= u ^ XT(v[i][3] ^ t);
-    }
-    for (i = 0; i < 16; ++i) {
-        s[i] = v[i / 4][i % 4] ^ rk[i];
-    } */
+  unsigned char i, t, u, v[4][4];
+  for (i = 0; i < 16; ++i) {
+    v[((i / 4) + 4 - (i % 4)) % 4][i % 4] = sbox[s[i]];
+  }
+  for (i = 0; i < 4; ++i) {
+    t = v[i][0];
+    u = v[i][0] ^ v[i][1] ^ v[i][2] ^ v[i][3];
+    v[i][0] ^= u ^ XT(v[i][0] ^ v[i][1]);
+    v[i][1] ^= u ^ XT(v[i][1] ^ v[i][2]);
+    v[i][2] ^= u ^ XT(v[i][2] ^ v[i][3]);
+    v[i][3] ^= u ^ XT(v[i][3] ^ t);
+  }
+  for (i = 0; i < 16; ++i) {
+    s[i] = v[i / 4][i % 4] ^ rk[i];
+  }
 }
 
 // Simulate _mm_unpacklo_epi32

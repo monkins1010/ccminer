@@ -65,7 +65,7 @@ FORCE_INLINE __m128i _mm_clmulepi64_si128_emu(const __m128i a, const __m128i &b,
  // uint64x2_t aa = *(uint64x2_t*)&a;
  // uint64x2_t bb = *(uint64x2_t*)&b;
   
- result = (__m128i)vmull_p64(vgetq_lane_u64(a, 1), vgetq_lane_u64(b,0)); 
+ result = _mm_clmulepi64_si128(a, b, 0x01); /* lane1(a) x lane0(b); via SSE2NEON so the non-crypto polyfill is used */ 
 
 	return result;
 
@@ -297,7 +297,10 @@ uint64_t precompReduction64_port(__m128i A) {
 
 uint8x16_t _mm_aesenc_si128 (uint8x16_t a, uint8x16_t RoundKey)
 {
-    return vaesmcq_u8(vaeseq_u8(a, (uint8x16_t){})) ^ RoundKey;
+    /* Delegate to SSE2NEON's __m128i overload, which uses a software AES
+       round when __ARM_FEATURE_CRYPTO is undefined. */
+    return vreinterpretq_u8_m128i(
+        _mm_aesenc_si128(vreinterpretq_m128i_u8(a), vreinterpretq_m128i_u8(RoundKey)));
 }
 
 
