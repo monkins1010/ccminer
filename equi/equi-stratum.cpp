@@ -251,7 +251,7 @@ bool equi_stratum_submit(struct pool_infos *pool, struct work *work)
 	}
 	cbin2hex(solhex, (const char*) work->extra, 1347);
 
-	char* solHexRestore = (char*) calloc(128, 1);
+	char* solHexRestore = (char*) calloc(128 + 1, 1); // +1 for the NUL written by cbin2hex
     cbin2hex(solHexRestore, (const char*)&work->solution[8], 64);
     memcpy(&solhex[6+16], solHexRestore, 128);
 
